@@ -36,7 +36,40 @@ const caveat = Caveat({
   display: "swap",
 });
 
-const SITE_URL = process.env.NEXT_PUBLIC_SERVER_URL ?? "https://monochrome.studio";
+const DEFAULT_SITE_URL = "https://monochrome.studio";
+
+/**
+ * The public origin, used for canonical URLs, OpenGraph and JSON-LD.
+ *
+ * This is build-time config typed by a human into a hosting dashboard, so it is
+ * treated as untrusted. Two values that look fine and are not:
+ *   - `""` — the variable was created but left blank. `??` would pass it
+ *     straight through, and `new URL("")` throws, failing the whole build.
+ *   - `my-app.vercel.app` — a bare host with no protocol also throws.
+ * A bad origin should degrade to the default, never take the build down.
+ */
+function resolveSiteUrl(): string {
+  const candidates = [
+    process.env.NEXT_PUBLIC_SERVER_URL,
+    // Vercel injects the deployment host (without a protocol) on previews,
+    // where the real URL is not known until after the build starts.
+    process.env.NEXT_PUBLIC_VERCEL_URL,
+    DEFAULT_SITE_URL,
+  ];
+
+  for (const candidate of candidates) {
+    const value = candidate?.trim();
+    if (!value) continue;
+    try {
+      return new URL(/^https?:\/\//i.test(value) ? value : `https://${value}`).href;
+    } catch {
+      // Unparseable — try the next candidate.
+    }
+  }
+  return DEFAULT_SITE_URL;
+}
+
+const SITE_URL = resolveSiteUrl();
 const TITLE = `${STUDIO.name} — self-serve photo sessions from ₱299`;
 const DESCRIPTION = STUDIO.positioning;
 
