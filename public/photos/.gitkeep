@@ -1,0 +1,4 @@
+Session photography goes here. See README.md — filenames are the photo ids
+(hero, session-original, session-birthday, session-graduation, studio-room,
+work-1 … work-6) with any of .avif .webp .jpg .jpeg .png. Files are picked up
+on the next render; ids with no file render their art-direction note instead.

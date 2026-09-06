@@ -1,0 +1,169 @@
+@import "tailwindcss";
+
+/* ------------------------------------------------------------------ *
+ * Design tokens — Monochrome Studio
+ * Lifted from the "Monochrome Studio v5" design canvas artboard.
+ * The accent is a single warm red used only on CTAs, active states and
+ * section numerals; everything else is paper, ink and one warm grey.
+ * ------------------------------------------------------------------ */
+@theme {
+  /* Ink + paper */
+  --color-ink: #23272f;
+  --color-ink-2: #3b3f47;
+  --color-ink-3: #5c6068;
+  --color-paper: #ffffff;
+  --color-cream: #fbfaf7;
+  --color-sand: #f7f5f1;
+  --color-bone: #efede8;
+
+  /* Rules + muted type */
+  --color-line: #e6e3dc;
+  --color-line-strong: #d9d5cc;
+  --color-muted: #6e7076;
+  --color-muted-2: #9a9ca1;
+  --color-faint: #c9cbd0;
+  --color-faint-2: #b8babf;
+
+  /* Accent + brand */
+  --color-accent: #ef4130;
+  --color-badge: #2b5e9c;
+  --color-tape: rgba(240, 225, 180, 0.85);
+
+  /* The four backdrop colours the studio actually owns */
+  --color-backdrop-red: #c13a30;
+  --color-backdrop-tan: #c49b6a;
+  --color-backdrop-yellow: #f6d65a;
+  --color-backdrop-pink: #f3a6c6;
+
+  /* Type */
+  --font-display: var(--font-anton), "Anton", ui-sans-serif, sans-serif;
+  --font-sans: var(--font-instrument-sans), "Instrument Sans", system-ui, sans-serif;
+  --font-mono: var(--font-space-mono), "Space Mono", ui-monospace, monospace;
+  --font-script: var(--font-caveat), "Caveat", cursive;
+
+  /* Motion */
+  --animate-marquee: marquee 46s linear infinite;
+  --animate-kenburns: kenburns 24s ease-in-out infinite alternate;
+  --animate-bob: bob 3.4s ease-in-out infinite alternate;
+  --animate-bob-slow: bob 4.1s ease-in-out infinite alternate;
+  --animate-hero-up: heroUp 0.8s both;
+  --animate-fade-in: fadeIn 0.25s ease both;
+  --animate-eyebrow-in: fadeIn 1.2s ease both;
+  --animate-wiz-in: wizIn 0.32s cubic-bezier(0.22, 0.9, 0.3, 1);
+  --animate-step-in: stepIn 0.35s both;
+  --animate-pop-in: popIn 0.3s both;
+  --animate-lb-in: lbIn 0.22s both;
+  --animate-pulse-slot: pulseSlot 1s ease infinite alternate;
+}
+
+@keyframes marquee {
+  from { transform: translateX(0); }
+  to { transform: translateX(-50%); }
+}
+@keyframes kenburns {
+  from { transform: scale(1); }
+  to { transform: scale(1.07); }
+}
+@keyframes bob {
+  from { transform: rotate(9deg) translateY(0); }
+  to { transform: rotate(9deg) translateY(-7px); }
+}
+@keyframes heroUp {
+  from { opacity: 0; transform: translateY(26px); }
+  to { opacity: 1; transform: none; }
+}
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+@keyframes wizIn {
+  from { transform: translateX(44px); opacity: 0; }
+  to { transform: translateX(0); opacity: 1; }
+}
+@keyframes stepIn {
+  from { opacity: 0; transform: translateX(16px); }
+  to { opacity: 1; transform: none; }
+}
+@keyframes popIn {
+  from { opacity: 0; transform: scale(0.9); }
+  to { opacity: 1; transform: scale(1); }
+}
+@keyframes lbIn {
+  from { opacity: 0; transform: scale(0.92); }
+  to { opacity: 1; transform: scale(1); }
+}
+@keyframes pulseSlot {
+  from { opacity: 0.4; }
+  to { opacity: 1; }
+}
+
+/* ------------------------------------------------------------------ *
+ * Base
+ * ------------------------------------------------------------------ */
+html {
+  scroll-behavior: smooth;
+  scroll-padding-top: 96px;
+}
+
+body {
+  margin: 0;
+  background: var(--color-paper);
+  color: var(--color-ink);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+}
+
+::selection {
+  background: var(--color-ink);
+  color: var(--color-paper);
+}
+
+/* Visible keyboard focus everywhere, on the ink colour so it reads on
+   both paper and the accent band. */
+:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 3px;
+  border-radius: 4px;
+}
+
+/* Scroll-reveal: elements start hidden only once JS has marked them,
+   so the page is fully readable with JS disabled. */
+[data-reveal="pending"] {
+  opacity: 0;
+  transform: translateY(24px);
+  transition:
+    opacity 0.7s ease,
+    transform 0.7s cubic-bezier(0.22, 0.9, 0.3, 1);
+}
+[data-reveal="in"] {
+  opacity: 1;
+  transform: none;
+  transition:
+    opacity 0.7s ease,
+    transform 0.7s cubic-bezier(0.22, 0.9, 0.3, 1);
+}
+[data-reveal-rule="pending"] {
+  transform: scaleX(0);
+  transform-origin: left;
+  transition: transform 0.9s cubic-bezier(0.22, 0.9, 0.3, 1) 0.15s;
+}
+[data-reveal-rule="in"] {
+  transform: scaleX(1);
+  transition: transform 0.9s cubic-bezier(0.22, 0.9, 0.3, 1) 0.15s;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+  [data-reveal="pending"],
+  [data-reveal-rule="pending"] {
+    opacity: 1;
+    transform: none;
+  }
+}
