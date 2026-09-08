@@ -1,4 +1,5 @@
 import type { CollectionConfig } from 'payload'
+import { protectMediaInUse } from '@/hooks/protectMediaInUse'
 import { revalidateOnChange, revalidateOnDelete } from '@/hooks/revalidateSite'
 
 /**
@@ -52,6 +53,7 @@ export const Media: CollectionConfig = {
     ],
   },
   hooks: {
+    beforeDelete: [protectMediaInUse],
     afterChange: [revalidateOnChange],
     afterDelete: [revalidateOnDelete],
   },

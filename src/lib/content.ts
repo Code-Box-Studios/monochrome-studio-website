@@ -92,16 +92,23 @@ export async function getWork(): Promise<WorkEntry[]> {
     });
     if (docs.length === 0) return fallbackWork();
 
-    return docs.flatMap((doc, i) => {
+    // "Pin this session to the front of the grid" — sort is stable, so pinned
+    // rows keep their relative order and so does everything behind them.
+    const pinned = [...docs].sort(
+      (a, b) => Number(b.featured ?? false) - Number(a.featured ?? false),
+    );
+
+    return pinned.flatMap((doc, i) => {
       // depth:1 populates the upload; a bare id means the image is missing.
       const media = typeof doc.image === "object" ? doc.image : null;
-      if (!media?.url) return [];
+      const url = mediaUrl(media?.url);
+      if (!media || !url) return [];
       return [
         {
           key: String(doc.id),
           caption: doc.caption ?? "",
           category: doc.category,
-          image: { kind: "cms", url: media.url, alt: media.alt },
+          image: { kind: "cms", url, alt: media.alt },
           ...SCATTER[i % SCATTER.length],
         } satisfies WorkEntry,
       ];
@@ -163,7 +170,13 @@ export async function getTestimonials(): Promise<TestimonialEntry[]> {
     });
     if (docs.length === 0) return FALLBACK_TESTIMONIALS;
 
-    return docs.map((doc) => ({
+    // The checkbox is a selection, not a publish gate: with nothing ticked the
+    // studio sees everything it has written, and ticking any narrows the band to
+    // those. That way an untouched collection behaves exactly as before.
+    const ticked = docs.filter((doc) => doc.featured);
+    const shown = ticked.length > 0 ? ticked : docs;
+
+    return shown.map((doc) => ({
       key: String(doc.id),
       name: doc.name,
       attribution: doc.attribution ?? "",
@@ -350,6 +363,44 @@ function pick(value: unknown, fallback: string): string {
   return typeof value === "string" && value.trim() ? value : fallback;
 }
 
+/** This app's own origin, when it is configured and parseable. */
+const SITE_ORIGIN = (() => {
+  const raw = process.env.NEXT_PUBLIC_SERVER_URL?.trim();
+  if (!raw) return null;
+  try {
+    return new URL(/^https?:\/\//i.test(raw) ? raw : `https://${raw}`).origin;
+  } catch {
+    return null;
+  }
+})();
+
+/**
+ * Normalises an uploaded file's URL for `next/image`.
+ *
+ * Payload returns an *absolute* media URL whenever `serverURL` is set — which it
+ * is, from NEXT_PUBLIC_SERVER_URL. `next/image` rejects an absolute URL whose
+ * host is not listed in `images.remotePatterns`, and none are configured, so
+ * every uploaded photo would 400 from the optimizer in production and throw in
+ * dev. Our own uploads are not remote at all, so they are reduced back to a
+ * path; a genuinely different host (a future object store) is passed through
+ * untouched and does need a remotePatterns entry.
+ */
+function mediaUrl(value: unknown): string | null {
+  if (typeof value !== "string" || !value.trim()) return null;
+  if (value.startsWith("/")) return value;
+
+  let url: URL;
+  try {
+    url = new URL(value);
+  } catch {
+    return null;
+  }
+  // An upload can only ever be http(s); anything else is not an image source.
+  if (url.protocol !== "https:" && url.protocol !== "http:") return null;
+  if (SITE_ORIGIN && url.origin === SITE_ORIGIN) return `${url.pathname}${url.search}`;
+  return url.href;
+}
+
 async function loadSiteInfo(): Promise<SiteInfo> {
   const base = fallbackSite();
   const payload = await client();
@@ -375,10 +426,11 @@ async function loadSiteInfo(): Promise<SiteInfo> {
     // Without an intrinsic size next/image cannot reserve the space, so a logo
     // missing either dimension is treated as no logo at all.
     const logoDoc = typeof doc.logo === "object" ? doc.logo : null;
+    const logoSrc = mediaUrl(logoDoc?.url);
     const logo: SiteLogo | null =
-      logoDoc?.url && logoDoc.width && logoDoc.height
+      logoDoc && logoSrc && logoDoc.width && logoDoc.height
         ? {
-            url: logoDoc.url,
+            url: logoSrc,
             width: logoDoc.width,
             height: logoDoc.height,
             alt: logoDoc.alt?.trim() || name,
@@ -765,13 +817,14 @@ export async function getServiceCopy(): Promise<ServiceCopy[]> {
     return docs.map((doc) => {
       // depth:1 populates the upload; a bare id means the image is missing.
       const media = typeof doc.coverImage === "object" ? doc.coverImage : null;
+      const cover = mediaUrl(media?.url);
       return {
         productId: doc.productId,
         title: doc.title?.trim() ? doc.title.trim() : null,
         inclusions: (doc.inclusions ?? []).flatMap((row) =>
           row.item?.trim() ? [row.item.trim()] : [],
         ),
-        cover: media?.url ? { kind: "cms", url: media.url, alt: media.alt } : null,
+        cover: media && cover ? { kind: "cms", url: cover, alt: media.alt } : null,
         featured: doc.featured ?? false,
         order: doc.order ?? null,
       } satisfies ServiceCopy;

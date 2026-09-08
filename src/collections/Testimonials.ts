@@ -78,7 +78,8 @@ export const Testimonials: CollectionConfig = {
       type: 'checkbox',
       admin: {
         position: 'sidebar',
-        description: 'Tick to pick this quote for the homepage band.',
+        description:
+          'Tick to show only your picked quotes on the home page. Leave every box unticked — as they are now — and all your quotes show, newest arrangement first. Tick even one and the band narrows to just the ticked ones, so this is how you retire a quote without deleting it.',
       },
     },
     {

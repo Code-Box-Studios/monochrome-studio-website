@@ -312,7 +312,7 @@ export interface Testimonial {
    */
   avatar?: (number | null) | Media;
   /**
-   * Tick to pick this quote for the homepage band.
+   * Tick to show only your picked quotes on the home page. Leave every box unticked — as they are now — and all your quotes show, newest arrangement first. Tick even one and the band narrows to just the ticked ones, so this is how you retire a quote without deleting it.
    */
   featured?: boolean | null;
   /**
@@ -370,7 +370,7 @@ export interface User {
    */
   name?: string | null;
   /**
-   * Admins can manage other people who sign in; editors can change the site content but not the team.
+   * Admins can add and remove the people who sign in. Editors can change everything about the site — words, photos, packages — but cannot touch the team. Only an admin can change this setting, and the very first account created is always an admin.
    */
   role?: ('admin' | 'editor') | null;
   updatedAt: string;
