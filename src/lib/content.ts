@@ -407,13 +407,16 @@ const SITE_ORIGIN = (() => {
 /**
  * Normalises an uploaded file's URL for `next/image`.
  *
- * Payload returns an *absolute* media URL whenever `serverURL` is set — which it
- * is, from NEXT_PUBLIC_SERVER_URL. `next/image` rejects an absolute URL whose
- * host is not listed in `images.remotePatterns`, and none are configured, so
- * every uploaded photo would 400 from the optimizer in production and throw in
- * dev. Our own uploads are not remote at all, so they are reduced back to a
- * path; a genuinely different host (a future object store) is passed through
- * untouched and does need a remotePatterns entry.
+ * Payload returns paths today, because `serverURL` is deliberately not set (see
+ * payload.config.ts). This is the guard for the case where it is set again:
+ * Payload then emits absolute URLs, and `next/image` rejects an absolute URL
+ * whose host is not in `images.remotePatterns` — none are configured, so every
+ * uploaded photo would 400 from the optimizer and throw in dev.
+ *
+ * So this is standing insurance rather than the reason images work. A
+ * same-origin absolute URL is reduced back to a path; a genuinely different
+ * host (a future object store) is passed through untouched and would need its
+ * own remotePatterns entry.
  */
 function mediaUrl(value: unknown): string | null {
   if (typeof value !== "string" || !value.trim()) return null;

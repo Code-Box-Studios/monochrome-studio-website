@@ -41,6 +41,9 @@ const caveat = Caveat({
 
 const DEFAULT_SITE_URL = "https://monochrome.studio";
 
+/** Vercel sets this on the real deployment; anything else is a preview or local. */
+const isProduction = process.env.VERCEL_ENV === "production" || !process.env.VERCEL_ENV;
+
 /**
  * The public origin, used for canonical URLs, OpenGraph and JSON-LD.
  *
@@ -54,9 +57,12 @@ const DEFAULT_SITE_URL = "https://monochrome.studio";
 function resolveSiteUrl(): string {
   const candidates = [
     process.env.NEXT_PUBLIC_SERVER_URL,
-    // Vercel injects the deployment host (without a protocol) on previews,
-    // where the real URL is not known until after the build starts.
-    process.env.NEXT_PUBLIC_VERCEL_URL,
+    // The deployment host, for previews where the real URL is not known until
+    // the build starts. Never in production: this URL is baked into the
+    // canonical tag, og:url and the JSON-LD of a *static* prerender, so a
+    // deploy-unique vercel.app host would sit there competing with the real
+    // domain in search results until the next deploy.
+    isProduction ? undefined : process.env.NEXT_PUBLIC_VERCEL_URL,
     DEFAULT_SITE_URL,
   ];
 
@@ -110,7 +116,10 @@ export async function generateMetadata(): Promise<Metadata> {
       locale: "en_PH",
     },
     twitter: { card: "summary_large_image", title, description },
-    robots: { index: true, follow: true },
+    // A preview deployment is a copy of the whole site on a public URL. Letting
+    // it be indexed puts the studio in competition with itself for its own
+    // search results, so only the real deployment invites crawlers.
+    robots: isProduction ? { index: true, follow: true } : { index: false, follow: false },
   };
 }
 

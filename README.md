@@ -194,13 +194,20 @@ The deploy build command must run `payload migrate` before `next build`.
 > `dev` marker:
 >
 > ```sql
-> INSERT INTO payload_migrations (name, batch)
-> VALUES ('20260908_090357_faq_note_count_token', 2);
-> DELETE FROM payload_migrations WHERE name = 'dev';
+> DELETE FROM payload_migrations WHERE batch = -1;
 > ```
 >
-> Run it against the Neon database once, then `payload migrate` is clean and
-> non-interactive from then on.
+> Match on `batch = -1`, which is the condition the code actually tests
+> (`@payloadcms/drizzle/dist/migrate.js`), not on the name. Do not hand-insert a
+> row for the pending migration — once the marker is gone, `payload migrate`
+> runs it and records it itself, and the migration is an idempotent
+> `ALTER … SET DEFAULT` that the dev push had already applied.
+>
+> Verified behaviour with the marker present, stdin closed as in CI:
+> `pnpm payload migrate` renders the prompt and never returns. There is no flag
+> to skip it — `--force-accept-warning` is wired only to `migrate:create` and
+> `migrate:fresh`, while `case 'migrate'` calls `adapter.migrate()` with no
+> arguments.
 
 `pnpm seed` fills an empty admin with the launch content so the studio has
 something to edit rather than a blank form. It skips anything already there —
