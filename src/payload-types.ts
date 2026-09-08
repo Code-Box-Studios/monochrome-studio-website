@@ -211,7 +211,7 @@ export interface Media {
    */
   alt: string;
   /**
-   * Optional line printed under the photo where the layout shows captions. Leave blank for backgrounds, logos and decorative images.
+   * NOT SHOWN ON THE SITE. Your own note about this file, to help you find it again in this list. The caption printed under a photo on the home page is the one on the Recent Work entry, not this.
    */
   caption?: string | null;
   updatedAt: string;
@@ -273,7 +273,7 @@ export interface Portfolio {
    */
   category: 'solo' | 'duo' | 'collective' | 'birthday' | 'graduation';
   /**
-   * Lower numbers appear first in the grid. Leave blank and the newest photos lead.
+   * Lower numbers appear first in the grid. Photos with no number come after all the numbered ones, newest first — so numbering one photo pushes every unnumbered photo behind it.
    */
   order?: number | null;
   /**
@@ -697,7 +697,7 @@ export interface SiteSetting {
    */
   logo?: (number | null) | Media;
   /**
-   * The studio local time, used only to print dates and times correctly on the site (e.g. Asia/Manila). Changing it does not change your bookable hours.
+   * Your time zone, e.g. Asia/Manila. At the moment it is only printed in the small line at the very bottom of the page; once bookings are switched on it is what dates and times will be shown in. Changing it does not change your bookable hours.
    */
   timezone?: string | null;
   address?: {
@@ -959,7 +959,7 @@ export interface TestimonialsBlock {
    */
   heading?: string | null;
   /**
-   * Optional small line beside the heading. The quotes themselves are edited in the Testimonials collection; add, hide or reorder them there.
+   * Optional small line beside the heading. It only appears if you have written a heading above — on its own it has nothing to sit beside, so it is not shown. The quotes themselves are edited in the Testimonials collection; add, hide or reorder them there.
    */
   note?: string | null;
   id?: string | null;
