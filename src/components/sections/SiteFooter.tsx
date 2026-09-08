@@ -53,10 +53,10 @@ export function SiteFooter({ site, links, year }: SiteFooterProps) {
           FOR THIS PROTOTYPE
         </span>
         <span>
-          POWERED BY{" "}
-          <a href="#visit" className="font-bold text-muted no-underline">
-            CODE BOX STUDIOS
-          </a>
+          {/* Plain text until there is a real address to point at — the old
+              #visit placeholder became a dead link the moment the Visit section
+              could be removed from the page. */}
+          POWERED BY <span className="font-bold text-muted">CODE BOX STUDIOS</span>
         </span>
       </div>
     </footer>

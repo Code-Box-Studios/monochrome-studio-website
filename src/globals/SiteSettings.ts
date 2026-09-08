@@ -93,7 +93,7 @@ export const SiteSettings: GlobalConfig = {
               defaultValue: 'Asia/Manila',
               admin: {
                 description:
-                  'The studio local time, used only to print dates and times correctly on the site (e.g. Asia/Manila). Changing it does not change your bookable hours.',
+                  'Your time zone, e.g. Asia/Manila. At the moment it is only printed in the small line at the very bottom of the page; once bookings are switched on it is what dates and times will be shown in. Changing it does not change your bookable hours.',
               },
             },
           ],

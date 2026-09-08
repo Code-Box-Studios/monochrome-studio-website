@@ -98,7 +98,7 @@ export async function getWork(): Promise<WorkEntry[]> {
       (a, b) => Number(b.featured ?? false) - Number(a.featured ?? false),
     );
 
-    return pinned.flatMap((doc, i) => {
+    const entries = pinned.flatMap((doc, i) => {
       // depth:1 populates the upload; a bare id means the image is missing.
       const media = typeof doc.image === "object" ? doc.image : null;
       const url = mediaUrl(media?.url);
@@ -113,6 +113,11 @@ export async function getWork(): Promise<WorkEntry[]> {
         } satisfies WorkEntry,
       ];
     });
+
+    // Rows can exist and still yield nothing usable — every image deleted from
+    // under them, say. Checking the *entries* rather than the row count is what
+    // stops that showing an empty grid instead of the launch photos.
+    return entries.length > 0 ? entries : fallbackWork();
   } catch (error) {
     console.warn("[content] portfolio query failed:", error);
     return fallbackWork();
@@ -344,6 +349,31 @@ function fallbackSite(): SiteInfo {
   };
 }
 
+/** The only schemes a link on this site may carry. */
+const SAFE_LINK_PROTOCOLS = new Set(["http:", "https:", "mailto:", "tel:"]);
+
+/**
+ * Gate for an editor-supplied `<a href>` — the phone link and the social links.
+ *
+ * These come from the same global as `mapEmbedUrl`, which is already scheme-
+ * checked, and they end up in an attribute where `javascript:` runs on this
+ * origin the moment a visitor clicks. Same hole, same fix. A rejected value is
+ * treated as not-configured so the caller falls back rather than shipping a
+ * live link nobody vetted.
+ */
+function safeLinkUrl(value: unknown): string | null {
+  if (typeof value !== "string") return null;
+  const trimmed = value.trim();
+  if (!trimmed) return null;
+  // In-page and site-relative links carry no scheme at all.
+  if (trimmed.startsWith("#") || trimmed.startsWith("/")) return trimmed;
+  try {
+    return SAFE_LINK_PROTOCOLS.has(new URL(trimmed).protocol) ? trimmed : null;
+  } catch {
+    return null;
+  }
+}
+
 /**
  * Only an https URL may reach an iframe src. A `javascript:` value typed into
  * site-settings would otherwise execute on this origin, so anything else is
@@ -417,8 +447,10 @@ async function loadSiteInfo(): Promise<SiteInfo> {
     const hours = (doc.hours ?? []).flatMap((row) =>
       row.label && row.value ? [{ label: row.label, value: row.value }] : [],
     );
+    // An unusable href falls back to the Visit anchor rather than being shipped
+    // as a live link — the row still shows, it just points somewhere harmless.
     const socials = (doc.socials ?? []).flatMap((row) =>
-      row.label ? [{ label: row.label, href: row.href ?? "#visit" }] : [],
+      row.label ? [{ label: row.label, href: safeLinkUrl(row.href) ?? "#visit" }] : [],
     );
 
     const name = pick(doc.name, base.name);
@@ -451,7 +483,7 @@ async function loadSiteInfo(): Promise<SiteInfo> {
       timezone: pick(doc.timezone, base.timezone),
       hours: hours.length ? hours : base.hours,
       phone: pick(doc.contact?.phone, base.phone),
-      phoneHref: pick(doc.contact?.phoneHref, base.phoneHref),
+      phoneHref: safeLinkUrl(doc.contact?.phoneHref) ?? base.phoneHref,
       email: pick(doc.contact?.email, base.email),
       socials: socials.length ? socials : base.socials,
       mapEmbedUrl: safeEmbedUrl(doc.mapEmbedUrl),

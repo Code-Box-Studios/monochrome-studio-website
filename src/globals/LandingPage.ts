@@ -222,7 +222,7 @@ const testimonialsBlock: Block = {
       type: 'text',
       admin: {
         description:
-          'Optional small line beside the heading. The quotes themselves are edited in the Testimonials collection; add, hide or reorder them there.',
+          'Optional small line beside the heading. It only appears if you have written a heading above — on its own it has nothing to sit beside, so it is not shown. The quotes themselves are edited in the Testimonials collection; add, hide or reorder them there.',
       },
     },
   ],

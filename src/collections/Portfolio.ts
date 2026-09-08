@@ -65,7 +65,8 @@ export const Portfolio: CollectionConfig = {
       type: 'number',
       admin: {
         position: 'sidebar',
-        description: 'Lower numbers appear first in the grid. Leave blank and the newest photos lead.',
+        description:
+          'Lower numbers appear first in the grid. Photos with no number come after all the numbered ones, newest first — so numbering one photo pushes every unnumbered photo behind it.',
       },
     },
     {

@@ -72,7 +72,7 @@ export const Media: CollectionConfig = {
       type: 'text',
       admin: {
         description:
-          'Optional line printed under the photo where the layout shows captions. Leave blank for backgrounds, logos and decorative images.',
+          'NOT SHOWN ON THE SITE. Your own note about this file, to help you find it again in this list. The caption printed under a photo on the home page is the one on the Recent Work entry, not this.',
       },
     },
   ],
