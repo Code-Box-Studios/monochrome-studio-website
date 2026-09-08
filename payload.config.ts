@@ -71,6 +71,22 @@ export default buildConfig({
 
   sharp,
 
-  // Everything the studio uploads is public imagery served by next/image.
-  serverURL: process.env.NEXT_PUBLIC_SERVER_URL,
+  /**
+   * No `serverURL` on purpose.
+   *
+   * Setting it pins Payload to one origin, and two things then break the moment
+   * the admin is opened on any other host — a Vercel preview URL, the bare
+   * domain when the variable says www, http in local testing:
+   *
+   *   1. Every save is rejected with a 403. Payload's CSRF check compares the
+   *      browser's Origin against `serverURL`, and the admin shows no error when
+   *      it fails — the button simply does nothing, which is the worst way for
+   *      this to fail. Verified: the same build saved fine on the matching
+   *      origin and 403'd on a different one.
+   *   2. Uploaded media comes back as absolute URLs, which `next/image` refuses
+   *      unless the host is in `images.remotePatterns`.
+   *
+   * Left unset, Payload answers relative to whatever origin served the request,
+   * so the admin works on every deployment and media URLs are paths.
+   */
 });

@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" role="img" aria-label="Monochrome Studio">
+  <!-- The studio red from the wordmark: the accent token, #ef4130. -->
+  <rect width="32" height="32" rx="7" fill="#ef4130"/>
+  <!-- The camera that sits above MONOCHROME in the logo, reduced to a solid
+       silhouette so it still reads at 16px where an outline would disappear. -->
+  <path fill="#ffffff" d="M12.4 7h7.2c.5 0 .9.3 1.1.7l.7 1.6H24a3 3 0 0 1 3 3v9a3 3 0 0 1-3 3H8a3 3 0 0 1-3-3v-9a3 3 0 0 1 3-3h2.6l.7-1.6c.2-.4.6-.7 1.1-.7z"/>
+  <circle cx="16" cy="17" r="4.6" fill="#ef4130"/>
+  <circle cx="9.4" cy="12.6" r="1.05" fill="#ef4130"/>
+</svg>
