@@ -1,4 +1,5 @@
 import { lexicalEditor } from '@payloadcms/richtext-lexical'
+import { revalidateOnChange, revalidateOnDelete } from '@/hooks/revalidateSite'
 import type { CollectionConfig } from 'payload'
 
 export const Faqs: CollectionConfig = {
@@ -12,6 +13,10 @@ export const Faqs: CollectionConfig = {
   },
   access: {
     read: () => true,
+  },
+  hooks: {
+    afterChange: [revalidateOnChange],
+    afterDelete: [revalidateOnDelete],
   },
   fields: [
     {

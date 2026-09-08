@@ -106,3 +106,14 @@ export const WORK: readonly WorkItem[] = [
   { photo: "work-5", caption: "18th, with the spotlight", category: "birthday", tilt: -1, offsetY: 10, delay: 90 },
   { photo: "work-6", caption: "the kids' princess set-up", category: "birthday", tilt: 0.8, offsetY: 0, delay: 180 },
 ];
+
+/**
+ * Where a photographic surface gets its image.
+ *
+ * Declared here rather than in `content.ts` because client components need the
+ * type, and `content.ts` reaches for the database — importing it from a client
+ * component would drag server code into the browser bundle.
+ */
+export type WorkImage =
+  | { kind: "cms"; url: string; alt: string }
+  | { kind: "file"; id: PhotoId };

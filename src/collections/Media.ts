@@ -1,4 +1,5 @@
 import type { CollectionConfig } from 'payload'
+import { revalidateOnChange, revalidateOnDelete } from '@/hooks/revalidateSite'
 
 /**
  * Media — every public image on the site.
@@ -49,6 +50,10 @@ export const Media: CollectionConfig = {
         withoutEnlargement: true,
       },
     ],
+  },
+  hooks: {
+    afterChange: [revalidateOnChange],
+    afterDelete: [revalidateOnDelete],
   },
   fields: [
     {

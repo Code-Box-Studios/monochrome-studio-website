@@ -888,7 +888,7 @@ export interface PackagesBlock {
    */
   backdropHeading?: string | null;
   /**
-   * Small note beside the colour swatches. One thought per line. The swatches themselves come from Site Settings, and every package price on this page is read live from the booking system — never type package prices here.
+   * Small note beside the colour swatches. One thought per line. The four swatch colours are the studio’s actual backdrops and are set in code, not here. Every package price on this page is read live from the booking system — never type package prices here.
    */
   backdropNote?: string | null;
   id?: string | null;
@@ -1017,18 +1017,6 @@ export interface VisitBlock {
    * Optional small line beside the heading. The address, opening hours, phone, email and social links all come from Site Settings so they can never disagree with the footer.
    */
   note?: string | null;
-  /**
-   * Tick this once the studio is happy to embed Google Maps on the site. Until then a placeholder box is shown instead.
-   */
-  showMap?: boolean | null;
-  /**
-   * The map embed address from Google Maps (Share → Embed a map → copy the src link). Only used when the map is switched on above.
-   */
-  mapEmbedUrl?: string | null;
-  /**
-   * Text shown in the dashed box while the map is switched off.
-   */
-  mapPlaceholderLabel?: string | null;
   id?: string | null;
   blockName?: string | null;
   blockType: 'visit';
@@ -1205,9 +1193,6 @@ export interface CtaBandBlockSelect<T extends boolean = true> {
 export interface VisitBlockSelect<T extends boolean = true> {
   heading?: T;
   note?: T;
-  showMap?: T;
-  mapEmbedUrl?: T;
-  mapPlaceholderLabel?: T;
   id?: T;
   blockName?: T;
 }

@@ -1,4 +1,5 @@
 import type { Block, GlobalConfig } from 'payload'
+import { revalidateGlobalOnChange } from '@/hooks/revalidateSite'
 
 /**
  * The landing page layout.
@@ -306,6 +307,9 @@ const visitBlock: Block = {
 
 export const LandingPage: GlobalConfig = {
   slug: 'landing-page',
+  hooks: {
+    afterChange: [revalidateGlobalOnChange],
+  },
   label: 'Landing Page',
   access: {
     read: () => true,

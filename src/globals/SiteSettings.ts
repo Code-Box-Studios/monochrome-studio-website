@@ -1,4 +1,5 @@
 import type { GlobalConfig } from 'payload'
+import { revalidateGlobalOnChange } from '@/hooks/revalidateSite'
 
 /**
  * Everything the site says about the studio itself: the copy on the hero and
@@ -22,6 +23,9 @@ export const SiteSettings: GlobalConfig = {
   },
   access: {
     read: () => true,
+  },
+  hooks: {
+    afterChange: [revalidateGlobalOnChange],
   },
   fields: [
     {

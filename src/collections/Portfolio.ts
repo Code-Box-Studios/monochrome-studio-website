@@ -1,4 +1,5 @@
 import type { CollectionConfig } from 'payload'
+import { revalidateOnChange, revalidateOnDelete } from '@/hooks/revalidateSite'
 
 /**
  * RECENT WORK — the scattered print grid on the home page.
@@ -19,6 +20,10 @@ export const Portfolio: CollectionConfig = {
     group: 'Content',
     description:
       'The photos in the RECENT WORK grid on the home page. Newest sessions first — visitors filter them by session type.',
+  },
+  hooks: {
+    afterChange: [revalidateOnChange],
+    afterDelete: [revalidateOnDelete],
   },
   fields: [
     {

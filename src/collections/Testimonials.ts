@@ -1,4 +1,5 @@
 import type { CollectionConfig } from 'payload'
+import { revalidateOnChange, revalidateOnDelete } from '@/hooks/revalidateSite'
 
 /**
  * Customer quotes shown on the homepage testimonial band.
@@ -21,6 +22,10 @@ export const Testimonials: CollectionConfig = {
   },
   access: {
     read: () => true,
+  },
+  hooks: {
+    afterChange: [revalidateOnChange],
+    afterDelete: [revalidateOnDelete],
   },
   fields: [
     {

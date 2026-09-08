@@ -12,13 +12,22 @@ import {
   type ReactNode,
 } from "react";
 
-import { PHOTOS, type PhotoId } from "@/lib/photos";
+import type { PhotoId } from "@/lib/photos";
 
 type PhotoMap = Partial<Record<PhotoId, string>>;
 
+/**
+ * What the lightbox shows. Resolved by the caller, so one lightbox serves both
+ * CMS uploads and file-system photos without knowing which is which.
+ */
+export interface LightboxTarget {
+  url: string;
+  alt: string;
+}
+
 interface PhotoContextValue {
   sources: PhotoMap;
-  openLightbox: (id: PhotoId) => void;
+  openLightbox: (target: LightboxTarget) => void;
 }
 
 const PhotoContext = createContext<PhotoContextValue | null>(null);
@@ -40,10 +49,10 @@ export function PhotoProvider({
   sources: PhotoMap;
   children: ReactNode;
 }) {
-  const [lightbox, setLightbox] = useState<PhotoId | null>(null);
+  const [lightbox, setLightbox] = useState<LightboxTarget | null>(null);
   const closeRef = useRef<HTMLButtonElement>(null);
 
-  const openLightbox = useCallback((id: PhotoId) => setLightbox(id), []);
+  const openLightbox = useCallback((target: LightboxTarget) => setLightbox(target), []);
   const close = useCallback(() => setLightbox(null), []);
 
   // It claims role="dialog" aria-modal, so it has to behave like one: focus in
@@ -80,12 +89,11 @@ export function PhotoProvider({
   }, [lightbox, close]);
 
   const value = useMemo(() => ({ sources, openLightbox }), [sources, openLightbox]);
-  const src = lightbox ? sources[lightbox] : undefined;
 
   return (
     <PhotoContext.Provider value={value}>
       {children}
-      {lightbox && src ? (
+      {lightbox ? (
         <div
           role="dialog"
           aria-modal="true"
@@ -101,8 +109,8 @@ export function PhotoProvider({
           />
           <div className="animate-lb-in pointer-events-none absolute left-1/2 top-1/2 max-w-[92vw] -translate-x-1/2 -translate-y-1/2 rounded-lg bg-paper p-3 shadow-[0_30px_90px_rgba(0,0,0,0.5)]">
             <Image
-              src={src}
-              alt={PHOTOS[lightbox].alt}
+              src={lightbox.url}
+              alt={lightbox.alt}
               width={1200}
               height={1500}
               className="block max-h-[82vh] w-auto max-w-[min(680px,88vw)] object-contain"

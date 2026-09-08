@@ -11,7 +11,8 @@
     "typecheck": "tsc --noEmit",
     "payload": "payload",
     "generate:types": "payload generate:types",
-    "generate:importmap": "payload generate:importmap"
+    "generate:importmap": "payload generate:importmap",
+    "seed": "payload run src/seed/index.ts"
   },
   "dependencies": {
     "@payloadcms/db-postgres": "3.88.0",
@@ -33,6 +34,7 @@
     "eslint-config-next": "16.3.3",
     "sass": "^1.104.0",
     "tailwindcss": "^4",
+    "tsx": "^4.23.13",
     "typescript": "^5"
   },
   "packageManager": "pnpm@10.27.0"

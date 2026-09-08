@@ -5,14 +5,20 @@ import { useMemo, useState } from "react";
 import { Photo } from "@/components/ui/Photo";
 import { Reveal } from "@/components/ui/Reveal";
 import { SectionHeading } from "@/components/ui/SectionHeading";
-import { WORK, WORK_CATEGORIES, type WorkCategory } from "@/lib/photos";
+import type { WorkEntry } from "@/lib/content";
+import { WORK_CATEGORIES, type WorkCategory } from "@/lib/photos";
 
-export function Work() {
+interface WorkProps {
+  /** Portfolio entries, already resolved by the page. */
+  items: WorkEntry[];
+}
+
+export function Work({ items }: WorkProps) {
   const [active, setActive] = useState<WorkCategory>("all");
 
   const shown = useMemo(
-    () => (active === "all" ? WORK : WORK.filter((item) => item.category === active)),
-    [active],
+    () => (active === "all" ? items : items.filter((item) => item.category === active)),
+    [active, items],
   );
 
   return (
@@ -58,7 +64,7 @@ export function Work() {
 
       <div className="grid items-start gap-[34px] sm:grid-cols-2 lg:grid-cols-3">
         {shown.map((item) => (
-          <Reveal key={item.photo} delay={item.delay}>
+          <Reveal key={item.key} delay={item.delay}>
             {/* The scatter is decorative and overflows a one-column phone layout,
                 so the tilt/stagger only exist from the two-column breakpoint up. */}
             <figure
@@ -72,7 +78,7 @@ export function Work() {
             >
               <div className="relative aspect-[4/5]">
                 <Photo
-                  id={item.photo}
+                  image={item.image}
                   enlargeable
                   sizes="(max-width:640px) 100vw, (max-width:1024px) 50vw, 33vw"
                 />
