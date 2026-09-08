@@ -1,6 +1,8 @@
 import { Reveal } from "@/components/ui/Reveal";
 import { SectionHeading } from "@/components/ui/SectionHeading";
-import type { FaqEntry } from "@/lib/content";
+import type { FaqEntry, Section } from "@/lib/content";
+import { fillTokens } from "@/lib/format";
+import { jsonLd } from "@/lib/jsonld";
 
 interface FaqProps {
   /**
@@ -9,6 +11,7 @@ interface FaqProps {
    * quoting answers the page no longer gives.
    */
   items: FaqEntry[];
+  copy: Extract<Section, { kind: "faq" }>;
 }
 
 const NUMBER_WORDS = [
@@ -21,18 +24,12 @@ function countWord(n: number): string {
   return NUMBER_WORDS[n] ?? String(n);
 }
 
-/**
- * Serialises structured data for a <script> tag.
- *
- * JSON.stringify does not escape "<", and these answers are editor-supplied —
- * an answer containing </script> would close the tag early and inject the rest
- * as markup. Escaping the angle bracket keeps it inert and valid JSON.
- */
-function jsonLd(value: unknown): string {
-  return JSON.stringify(value).replace(/</g, "\\u003c");
-}
+export function Faq({ items, copy }: FaqProps) {
+  // `{count}` is filled in here rather than in the content layer: this is the
+  // only place that knows how many questions actually came back, so the note
+  // cannot go stale when the studio publishes a sixth question.
+  const note = fillTokens(copy.note, { count: countWord(items.length) });
 
-export function Faq({ items }: FaqProps) {
   const schema = {
     "@context": "https://schema.org",
     "@type": "FAQPage",
@@ -46,9 +43,9 @@ export function Faq({ items }: FaqProps) {
   return (
     <section id="faq" className="mx-auto max-w-[860px] px-5 py-16 md:px-10 lg:py-[100px] lg:px-14">
       <SectionHeading
-        index="04"
-        title="ASK US ANYTHING"
-        note={`THE ${countWord(items.length)} THAT COME UP MOST`}
+        index={copy.numeral}
+        title={copy.heading}
+        note={note}
         className="mb-8"
       />
 

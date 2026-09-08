@@ -1,9 +1,11 @@
 import { Reveal } from "@/components/ui/Reveal";
+import { SectionHeading } from "@/components/ui/SectionHeading";
 
-import type { TestimonialEntry } from "@/lib/content";
+import type { Section, TestimonialEntry } from "@/lib/content";
 
 interface TestimonialsProps {
   items: TestimonialEntry[];
+  copy: Extract<Section, { kind: "testimonials" }>;
 }
 
 /**
@@ -14,10 +16,20 @@ interface TestimonialsProps {
 const NUDGED_INDEX = 1;
 const STAGGER_MS = 120;
 
-export function Testimonials({ items }: TestimonialsProps) {
+export function Testimonials({ items, copy }: TestimonialsProps) {
   return (
     <section className="border-y border-line bg-sand">
       <div className="mx-auto grid max-w-[1240px] items-start gap-10 px-5 py-16 md:grid-cols-2 md:px-10 lg:grid-cols-3 lg:py-[88px] lg:px-14">
+        {/* The design ships without a heading here; one appears only if the
+            studio writes it, spanning the full width above the cards. */}
+        {copy.heading ? (
+          <SectionHeading
+            title={copy.heading}
+            note={copy.note}
+            className="md:col-span-2 lg:col-span-3"
+          />
+        ) : null}
+
         {items.map((item, i) => {
           const attribution = item.attribution.trim();
           return (

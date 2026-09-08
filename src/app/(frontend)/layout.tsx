@@ -1,7 +1,10 @@
 import type { Metadata, Viewport } from "next";
 import { Anton, Caveat, Instrument_Sans, Space_Mono } from "next/font/google";
 
-import { STUDIO } from "@/lib/studio";
+import { getSiteInfo, type SiteInfo } from "@/lib/content";
+import { pesoLabel } from "@/lib/format";
+import { jsonLd } from "@/lib/jsonld";
+import { productsIn } from "@/lib/products";
 import "./globals.css";
 
 /* The display face carries the studio name and every section head; the sans is
@@ -70,77 +73,87 @@ function resolveSiteUrl(): string {
 }
 
 const SITE_URL = resolveSiteUrl();
-const TITLE = `${STUDIO.name} — self-serve photo sessions from ₱299`;
-const DESCRIPTION = STUDIO.positioning;
 
-export const metadata: Metadata = {
-  metadataBase: new URL(SITE_URL),
-  title: { default: TITLE, template: `%s · ${STUDIO.name}` },
-  description: DESCRIPTION,
-  applicationName: STUDIO.name,
-  keywords: [
-    "photo studio Tagum City",
-    "self-serve photo session",
-    "graduation photos Tagum",
-    "birthday photoshoot Davao del Norte",
-    "ID photo Tagum City",
-  ],
-  alternates: { canonical: "/" },
-  openGraph: {
-    type: "website",
-    url: "/",
-    siteName: STUDIO.name,
-    title: TITLE,
-    description: DESCRIPTION,
-    locale: "en_PH",
-  },
-  twitter: { card: "summary_large_image", title: TITLE, description: DESCRIPTION },
-  robots: { index: true, follow: true },
-};
+/** The cheapest session, read from the packages rather than typed into the title. */
+function fromPrice(): string {
+  return pesoLabel(Math.min(...productsIn("orig").map((product) => product.price)));
+}
+
+function titleFor(site: SiteInfo): string {
+  return `${site.name} — self-serve photo sessions from ${fromPrice()}`;
+}
+
+export async function generateMetadata(): Promise<Metadata> {
+  const site = await getSiteInfo();
+  const title = titleFor(site);
+  const description = site.positioning;
+
+  return {
+    metadataBase: new URL(SITE_URL),
+    title: { default: title, template: `%s · ${site.name}` },
+    description,
+    applicationName: site.name,
+    keywords: [
+      `photo studio ${site.locality}`,
+      "self-serve photo session",
+      `graduation photos ${site.locality}`,
+      `birthday photoshoot ${site.region}`,
+      `ID photo ${site.locality}`,
+    ],
+    alternates: { canonical: "/" },
+    openGraph: {
+      type: "website",
+      url: "/",
+      siteName: site.name,
+      title,
+      description,
+      locale: "en_PH",
+    },
+    twitter: { card: "summary_large_image", title, description },
+    robots: { index: true, follow: true },
+  };
+}
 
 export const viewport: Viewport = {
   themeColor: "#ffffff",
   colorScheme: "light",
 };
 
-/** JSON-LD — real leverage for a local studio's Google presence. */
-const localBusiness = {
-  "@context": "https://schema.org",
-  "@type": "PhotographyBusiness",
-  name: STUDIO.name,
-  description: DESCRIPTION,
-  url: SITE_URL,
-  telephone: STUDIO.contact.phone,
-  email: STUDIO.contact.email,
-  priceRange: "₱₱",
-  currenciesAccepted: "PHP",
-  paymentAccepted: "GCash, Maya, Cash",
-  address: {
-    "@type": "PostalAddress",
-    streetAddress: STUDIO.address.lines.join(" ").replace(/,$/, ""),
-    addressLocality: STUDIO.address.locality,
-    addressRegion: STUDIO.address.region,
-    addressCountry: STUDIO.address.country,
-  },
-  openingHoursSpecification: [
-    {
-      "@type": "OpeningHoursSpecification",
-      dayOfWeek: [
-        "Monday",
-        "Tuesday",
-        "Wednesday",
-        "Thursday",
-        "Friday",
-        "Saturday",
-        "Sunday",
-      ],
-      opens: "09:00",
-      closes: "19:00",
+/**
+ * JSON-LD — real leverage for a local studio's Google presence.
+ *
+ * `openingHoursSpecification` is deliberately absent. The opening hours in the
+ * admin are free text ("MON – SUN" / "9:00 AM – 7:00 PM") because that is what
+ * the design prints, and guessing machine-readable times out of them would put
+ * hours in front of Google that nobody checked. A studio that shortens its day
+ * would then have customers arriving at a closed door. Restoring this property
+ * needs real `opens`/`closes` fields on the site-settings global, not a parser.
+ */
+function localBusiness(site: SiteInfo) {
+  return {
+    "@context": "https://schema.org",
+    "@type": "PhotographyBusiness",
+    name: site.name,
+    description: site.positioning,
+    url: SITE_URL,
+    telephone: site.phone,
+    email: site.email,
+    priceRange: "₱₱",
+    currenciesAccepted: "PHP",
+    paymentAccepted: "GCash, Maya, Cash",
+    address: {
+      "@type": "PostalAddress",
+      streetAddress: site.addressLines.join(" ").replace(/,$/, ""),
+      addressLocality: site.locality,
+      addressRegion: site.region,
+      addressCountry: site.country,
     },
-  ],
-};
+  };
+}
 
-export default function RootLayout({ children }: LayoutProps<"/">) {
+export default async function RootLayout({ children }: LayoutProps<"/">) {
+  const site = await getSiteInfo();
+
   return (
     <html
       lang="en-PH"
@@ -156,8 +169,9 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
         {children}
         <script
           type="application/ld+json"
-          // Static, author-controlled object — no user input reaches this string.
-          dangerouslySetInnerHTML={{ __html: JSON.stringify(localBusiness) }}
+          // Editor-supplied since the studio profile moved into the CMS, so the
+          // angle brackets are escaped rather than trusted.
+          dangerouslySetInnerHTML={{ __html: jsonLd(localBusiness(site)) }}
         />
       </body>
     </html>

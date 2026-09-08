@@ -1,8 +1,11 @@
 import { Reveal } from "./Reveal";
 
 interface SectionHeadingProps {
-  /** Two-digit section numeral, e.g. `01`. */
-  index: string;
+  /**
+   * Two-digit section numeral, e.g. `01`. Counted from the page order, so it is
+   * absent on the sections the design does not number (testimonials, the band).
+   */
+  index?: string;
   title: string;
   /** Right-aligned mono note; hidden on small screens where it would wrap. */
   note?: string;
@@ -18,9 +21,11 @@ export function SectionHeading({ index, title, note, className = "" }: SectionHe
   return (
     <Reveal className={className}>
       <div className="flex flex-wrap items-baseline gap-x-4 gap-y-2">
-        <span className="font-mono text-[11px] font-bold tracking-[0.14em] text-accent">
-          ( {index} )
-        </span>
+        {index ? (
+          <span className="font-mono text-[11px] font-bold tracking-[0.14em] text-accent">
+            ( {index} )
+          </span>
+        ) : null}
         <h2 className="m-0 font-display text-[28px] font-normal tracking-[0.015em] sm:text-[32px] lg:text-[38px]">
           {title}
         </h2>

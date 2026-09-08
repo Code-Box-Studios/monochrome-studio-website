@@ -43,6 +43,21 @@ export default buildConfig({
 
   db: postgresAdapter({
     pool: { connectionString: process.env.DATABASE_URI ?? "" },
+
+    /**
+     * Schema changes land through migrations only.
+     *
+     * Payload otherwise pushes the config's schema straight at the database
+     * whenever `NODE_ENV !== 'production'` — which is every script run: `pnpm
+     * seed`, a one-off tsx script, `next dev`. There is one database here, the
+     * live Neon one, so that default means an unfinished field edit reaches
+     * production the moment anybody seeds. It has already happened once: the
+     * `payload_migrations` table carries a `dev` row from exactly that.
+     *
+     * With this off, changing a field means generating a migration and running
+     * it — the same path the deploy takes.
+     */
+    push: false,
   }),
 
   // Generated types land next to the source they describe.

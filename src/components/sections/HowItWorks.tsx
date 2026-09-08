@@ -1,28 +1,13 @@
 import { Photo } from "@/components/ui/Photo";
 import { Reveal } from "@/components/ui/Reveal";
 import { SectionHeading } from "@/components/ui/SectionHeading";
-import { HOLD_MINUTES } from "@/lib/studio";
+import type { Section } from "@/lib/content";
 
-const STEPS = [
-  {
-    numeral: "01",
-    title: "Book a slot",
-    // The hold window is a business rule, not copy — it comes from the studio config.
-    body: `Pick a package and a time, then send the downpayment by GCash or Maya. Your slot is held for ${HOLD_MINUTES} minutes while you pay — no account, no DMs.`,
-  },
-  {
-    numeral: "02",
-    title: "Shoot — unlimited frames",
-    body: "Your backdrop color is set, props and spotlight are in the room, and there's time for an outfit change. Staff on hand if you want direction.",
-  },
-  {
-    numeral: "03",
-    title: "Pick + print",
-    body: "Choose your enhanced images before you leave; wallet-size prints are included and bigger prints and frames start at ₱99. Raws available for ₱250–300.",
-  },
-];
+interface HowItWorksProps {
+  copy: Extract<Section, { kind: "howItWorks" }>;
+}
 
-export function HowItWorks() {
+export function HowItWorks({ copy }: HowItWorksProps) {
   return (
     <section
       id="how"
@@ -42,19 +27,16 @@ export function HowItWorks() {
           />
         </div>
         <div className="absolute right-0 bottom-[12px] left-0 text-center font-script text-[22px] font-semibold text-ink-3">
-          the room, between sessions
+          {copy.photoCaption}
         </div>
       </Reveal>
 
       <Reveal delay={120} className="lg:pt-2">
-        <SectionHeading index="03" title="HOW IT WORKS" />
+        <SectionHeading index={copy.numeral} title={copy.heading} note={copy.note} />
 
         <div className="mt-[34px] flex flex-col gap-[26px]">
-          {STEPS.map((step) => (
-            <Reveal
-              key={step.numeral}
-              className="grid grid-cols-[64px_1fr] items-start gap-5"
-            >
+          {copy.steps.map((step) => (
+            <Reveal key={step.key} className="grid grid-cols-[64px_1fr] items-start gap-5">
               <div className="font-display text-[40px] leading-none text-accent">
                 {step.numeral}
               </div>

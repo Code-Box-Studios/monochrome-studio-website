@@ -1,46 +1,49 @@
-import Image from "next/image";
+import { Wordmark } from "@/components/ui/Wordmark";
+import type { SiteInfo } from "@/lib/content";
 
-import { STUDIO } from "@/lib/studio";
+import type { NavLink } from "./SiteHeader";
 
-const QUICK_LINKS = [
-  { href: "#packages", label: "PACKAGES" },
-  { href: "#work", label: "WORK" },
-  { href: "#faq", label: "FAQ" },
-  { href: "#visit", label: "TERMS" },
-  { href: "#visit", label: "PRIVACY" },
-] as const;
+interface SiteFooterProps {
+  site: SiteInfo;
+  /** Same derivation as the header nav — only sections that are on the page. */
+  links: NavLink[];
+  /** Passed in so the whole page agrees on one build-time year. */
+  year: number;
+}
 
-export function SiteFooter() {
+export function SiteFooter({ site, links, year }: SiteFooterProps) {
+  const imprint = [site.name, site.locality, site.timezone]
+    .map((part) => part.trim())
+    .filter(Boolean)
+    .join(" · ")
+    .toUpperCase();
+
   return (
     <footer className="border-t-0 bg-paper">
       <div className="mx-auto flex max-w-[1240px] flex-wrap items-center justify-between gap-6 px-5 py-9 md:px-10 lg:px-14">
         <span className="inline-flex items-baseline gap-3">
-          <Image
-            src="/brand/monochrome-logo.png"
-            alt="Monochrome Studio"
-            width={850}
-            height={300}
-            className="block h-[42px] w-auto"
-          />
+          <Wordmark logo={site.logo} name={site.name} className="block h-[42px] w-auto" />
           <span className="font-script text-[17px] font-semibold text-muted">
-            {STUDIO.tagline}
+            {site.tagline}
           </span>
         </span>
 
-        <nav aria-label="Footer" className="flex flex-wrap gap-x-[26px] gap-y-2">
-          {QUICK_LINKS.map((link) => (
-            <a
-              key={link.label}
-              href={link.href}
-              className="font-mono text-[10px] tracking-[0.14em] no-underline transition-colors hover:text-accent"
-            >
-              {link.label}
-            </a>
-          ))}
-        </nav>
+        {links.length > 0 ? (
+          <nav aria-label="Footer" className="flex flex-wrap gap-x-[26px] gap-y-2">
+            {links.map((link) => (
+              <a
+                key={link.label}
+                href={link.href}
+                className="font-mono text-[10px] tracking-[0.14em] no-underline transition-colors hover:text-accent"
+              >
+                {link.label}
+              </a>
+            ))}
+          </nav>
+        ) : null}
 
         <span className="font-mono text-[10px] tracking-[0.14em] text-muted">
-          © 2026 MONOCHROME STUDIO · TAGUM CITY · ASIA/MANILA
+          © {year} {imprint}
         </span>
       </div>
 

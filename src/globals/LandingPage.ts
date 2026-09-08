@@ -69,7 +69,8 @@ const heroBlock: Block = {
       type: 'text',
       defaultValue: 'SEE PACKAGES ↓',
       admin: {
-        description: 'Label on the outlined button beside it. It jumps down to the packages section.',
+        description:
+          'Label on the outlined button beside it. It jumps down to the packages section, so it is hidden automatically if you take that section off the page — it can never point at something that is not there.',
       },
     },
   ],
@@ -241,10 +242,10 @@ const faqBlock: Block = {
     {
       name: 'note',
       type: 'text',
-      defaultValue: 'THE FIVE THAT COME UP MOST',
+      defaultValue: 'THE {count} THAT COME UP MOST',
       admin: {
         description:
-          'Small line printed to the right of the heading on wide screens. The questions and answers live in the FAQ collection.',
+          'Small line printed to the right of the heading on wide screens. Write {count} and the number of questions you have published is spelled out in its place, so this line stays true when you add or remove one. The questions and answers themselves live in the FAQ collection.',
       },
     },
   ],
@@ -326,7 +327,7 @@ export const LandingPage: GlobalConfig = {
       label: 'Page sections',
       admin: {
         description:
-          'These are the sections of the home page, in the order visitors see them. Drag a section to move it and the live page reorders to match; remove one and it disappears from the page. Each section holds only its own wording — photos, quotes, questions and prices are edited in their own places and follow the section wherever you put it.',
+          'These are the sections of the home page, in the order visitors see them. Drag a section to move it and the live page reorders to match; remove one and it disappears from the page, along with its link in the menu. Each section holds only its own wording — photos, quotes, questions and prices are edited in their own places and follow the section wherever you put it. The ( 01 ) ( 02 ) numerals are counted from this order, so they stay correct however you arrange things, and the scrolling ticker travels with the opening frame. Add each section once: a second copy of one is ignored.',
       },
       blocks: [
         heroBlock,

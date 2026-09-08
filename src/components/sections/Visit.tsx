@@ -1,6 +1,6 @@
 import { Fragment } from "react";
 
-import type { SiteInfo } from "@/lib/content";
+import type { Section, SiteInfo } from "@/lib/content";
 import { Reveal } from "@/components/ui/Reveal";
 import { SectionHeading } from "@/components/ui/SectionHeading";
 
@@ -9,16 +9,22 @@ const LINK_CLASS =
 
 interface VisitProps {
   site: SiteInfo;
+  copy: Extract<Section, { kind: "visit" }>;
 }
 
-export function Visit({ site }: VisitProps) {
+export function Visit({ site, copy }: VisitProps) {
   return (
     <section
       id="visit"
       className="mx-auto grid max-w-[1240px] items-start gap-12 px-5 py-16 md:px-10 lg:grid-cols-[1.1fr_.9fr] lg:gap-[76px] lg:px-14 lg:py-[100px]"
     >
       <div>
-        <SectionHeading index="05" title="VISIT" className="mb-5" />
+        <SectionHeading
+          index={copy.numeral}
+          title={copy.heading}
+          note={copy.note}
+          className="mb-5"
+        />
 
         {site.mapEmbedUrl ? (
           <Reveal className="overflow-hidden rounded-lg">

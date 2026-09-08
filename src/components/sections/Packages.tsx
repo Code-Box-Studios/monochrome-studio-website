@@ -2,13 +2,22 @@ import { BookInline } from "@/components/ui/BookButton";
 import { Photo } from "@/components/ui/Photo";
 import { Reveal } from "@/components/ui/Reveal";
 import { SectionHeading } from "@/components/ui/SectionHeading";
+import type { Section, ServiceCopy } from "@/lib/content";
 import { pesoLabel } from "@/lib/format";
-import { ORIGINAL_EXTRAS, ORIGINAL_INCLUSIONS, productsIn } from "@/lib/products";
+import type { WorkImage } from "@/lib/photos";
+import {
+  ORIGINAL_EXTRAS,
+  ORIGINAL_INCLUSIONS,
+  productsIn,
+  type Product,
+  type ProductGroup,
+} from "@/lib/products";
 import { BACKDROPS } from "@/lib/studio";
 
 /**
- * The descriptive row labels are marketing copy, not product data — the prices
- * beside them are read from PRODUCTS so the page can never disagree with the till.
+ * The descriptive row labels the design shipped with. A package that has its own
+ * entry in `services-content` overrides these; the prices beside them always
+ * come from PRODUCTS, so the page can never disagree with the till.
  */
 const ROW_LABELS: Record<string, string> = {
   bdayA: "Birthday A — 20 min, 10 enhanced",
@@ -17,6 +26,7 @@ const ROW_LABELS: Record<string, string> = {
   gradS: "Silver — toga + glam, 10 enhanced",
   gradG: "Gold — 15 enhanced, 8R framed photo",
   gradP: "Platinum — 20 enhanced + family shot",
+  idpkg: "ID package — any combo",
 };
 
 const SWATCH: Record<(typeof BACKDROPS)[number]["name"], string> = {
@@ -36,6 +46,58 @@ const CARD_TITLE = "mx-[2px] mt-4 mb-1 font-display text-[21px] tracking-[0.02em
 
 const FOOTNOTE =
   "mx-[2px] mt-auto mb-0 pt-3 font-mono text-[10px] leading-[1.8] tracking-[0.06em] text-muted";
+
+type ServiceIndex = ReadonlyMap<string, ServiceCopy>;
+
+/** Cheapest package in a group — the "FROM ₱…" badge, read rather than retyped. */
+function cheapest(group: ProductGroup): number {
+  return Math.min(...productsIn(group).map((p) => p.price));
+}
+
+/**
+ * Rows in their published order unless the studio has given a package an
+ * explicit position; unset rows keep the order the till lists them in.
+ */
+function rowsFor(group: ProductGroup, services: ServiceIndex): Product[] {
+  return productsIn(group)
+    .map((product, index) => ({ product, index, order: services.get(product.id)?.order ?? null }))
+    .sort((a, b) => (a.order ?? Infinity) - (b.order ?? Infinity) || a.index - b.index)
+    .map((row) => row.product);
+}
+
+/**
+ * The one package that speaks for its group on this page — its photo on the
+ * card, its inclusions in the small print. A package ticked "featured" wins;
+ * otherwise the first one in the group that has anything to say.
+ */
+function fromGroup<T>(
+  group: ProductGroup,
+  services: ServiceIndex,
+  take: (service: ServiceCopy) => T | null,
+): T | null {
+  const entries = productsIn(group).flatMap((p) => {
+    const service = services.get(p.id);
+    return service ? [service] : [];
+  });
+  for (const service of [...entries.filter((s) => s.featured), ...entries]) {
+    const value = take(service);
+    if (value) return value;
+  }
+  return null;
+}
+
+const coverOf = (service: ServiceCopy) => service.cover;
+const inclusionsOf = (service: ServiceCopy) =>
+  service.inclusions.length ? service.inclusions.join(" · ") : null;
+
+/** The design's own photo slot, used until the studio uploads a cover. */
+function coverFor(group: ProductGroup, services: ServiceIndex, fallback: WorkImage): WorkImage {
+  return fromGroup(group, services, coverOf) ?? fallback;
+}
+
+function labelFor(product: Product, services: ServiceIndex): string {
+  return services.get(product.id)?.title ?? ROW_LABELS[product.id] ?? product.name;
+}
 
 function PriceRow({
   label,
@@ -57,16 +119,24 @@ function PriceRow({
   );
 }
 
-export function Packages() {
+interface PackagesProps {
+  copy: Extract<Section, { kind: "packages" }>;
+  /** Per-package editorial copy. Empty until the studio writes any. */
+  services: ServiceCopy[];
+}
+
+export function Packages({ copy, services }: PackagesProps) {
+  const byId: ServiceIndex = new Map(services.map((s) => [s.productId, s]));
+
   return (
     <section
       id="packages"
       className="mx-auto max-w-[1240px] px-5 py-16 md:px-10 lg:px-14 lg:pt-24 lg:pb-[90px]"
     >
       <SectionHeading
-        index="01"
-        title="PACKAGES"
-        note="THE STUDIO'S PUBLISHED PRICES — WHAT YOU SEE IS WHAT YOU PAY"
+        index={copy.numeral}
+        title={copy.heading}
+        note={copy.note}
         className="mb-[44px]"
       />
 
@@ -76,19 +146,19 @@ export function Packages() {
             ORIGINAL PACKAGES
           </div>
           <p className="mt-0 mb-[18px] font-mono text-[10px] leading-[1.9] tracking-[0.08em] text-muted">
-            {ORIGINAL_INCLUSIONS}
+            {fromGroup("orig", byId, inclusionsOf) ?? ORIGINAL_INCLUSIONS}
           </p>
 
           <div className="border-t-2 border-ink">
             {/* Below lg the name owns the whole row and duration / price / BOOK wrap
                 under it, rather than squeezing four columns onto a phone. */}
-            {productsIn("orig").map((p) => (
+            {rowsFor("orig", byId).map((p) => (
               <div
                 key={p.id}
                 className="flex flex-wrap items-baseline gap-x-5 gap-y-2 border-b border-line px-[2px] py-[15px] lg:grid lg:grid-cols-[1fr_auto_auto_auto]"
               >
                 <span className="w-full font-display text-[19px] tracking-[0.02em] lg:w-auto">
-                  {p.name}{" "}
+                  {byId.get(p.id)?.title ?? p.name}{" "}
                   <span className="font-mono text-[10px] tracking-[0.1em] text-muted">
                     — {p.pax}
                   </span>
@@ -116,16 +186,16 @@ export function Packages() {
             />
             <div className="relative aspect-[4/5]">
               <Photo
-                id="session-original"
+                image={coverFor("orig", byId, { kind: "file", id: "session-original" })}
                 enlargeable
                 sizes="(max-width:1024px) 100vw, 40vw"
               />
               <span className="absolute -top-[6px] -right-[18px] animate-bob [border-radius:50%] bg-badge px-[18px] py-4 font-display text-[17px] tracking-[0.04em] whitespace-nowrap text-paper shadow-[0_4px_10px_rgba(20,40,80,.25)] [transform:rotate(9deg)]">
-                FROM {pesoLabel(299)}
+                FROM {pesoLabel(cheapest("orig"))}
               </span>
             </div>
             <div className="absolute right-0 bottom-3 left-0 text-center font-script text-[21px] font-semibold text-ink-3">
-              unlimited shots, keep your favorites
+              {copy.polaroidCaption}
             </div>
           </div>
         </Reveal>
@@ -136,26 +206,26 @@ export function Packages() {
           <article className={CARD}>
             <div className="relative aspect-[4/5]">
               <Photo
-                id="session-birthday"
+                image={coverFor("bday", byId, { kind: "file", id: "session-birthday" })}
                 enlargeable
                 sizes="(max-width:1024px) 100vw, 33vw"
               />
-              <span className={CARD_BADGE}>FROM {pesoLabel(599)}</span>
+              <span className={CARD_BADGE}>FROM {pesoLabel(cheapest("bday"))}</span>
             </div>
             <h3 className={CARD_TITLE}>BIRTHDAY</h3>
             <div className="border-t border-line">
-              {productsIn("bday").map((p) => (
+              {rowsFor("bday", byId).map((p) => (
                 <PriceRow
                   key={p.id}
-                  label={ROW_LABELS[p.id] ?? p.name}
+                  label={labelFor(p, byId)}
                   price={pesoLabel(p.price)}
                   productId={p.id}
                 />
               ))}
             </div>
             <p className={FOOTNOTE}>
-              FREE 4R FRAMED PRINT + NUMBER BALLOON · KIDS THEMES: JUNGLE, DINOSAUR, CARS,
-              PRINCESS, MERMAID
+              {fromGroup("bday", byId, inclusionsOf) ??
+                "FREE 4R FRAMED PRINT + NUMBER BALLOON · KIDS THEMES: JUNGLE, DINOSAUR, CARS, PRINCESS, MERMAID"}
             </p>
           </article>
         </Reveal>
@@ -164,11 +234,11 @@ export function Packages() {
           <article className={CARD}>
             <div className="relative aspect-[4/5]">
               <Photo
-                id="session-graduation"
+                image={coverFor("grad", byId, { kind: "file", id: "session-graduation" })}
                 enlargeable
                 sizes="(max-width:1024px) 100vw, 33vw"
               />
-              <span className={CARD_BADGE}>FROM {pesoLabel(499)}</span>
+              <span className={CARD_BADGE}>FROM {pesoLabel(cheapest("grad"))}</span>
             </div>
             <h3 className={CARD_TITLE}>
               GRADUATION{" "}
@@ -177,30 +247,32 @@ export function Packages() {
               </span>
             </h3>
             <div className="border-t border-line">
-              {productsIn("grad").map((p) => (
+              {rowsFor("grad", byId).map((p) => (
                 <PriceRow
                   key={p.id}
-                  label={ROW_LABELS[p.id] ?? p.name}
+                  label={labelFor(p, byId)}
                   price={pesoLabel(p.price)}
                   productId={p.id}
                 />
               ))}
             </div>
             <p className={FOOTNOTE}>
-              FREE TOGA + GRAD BACKDROP · SOFT + HARD COPIES · HMUA ADD-ON{" "}
-              {pesoLabel(2500)} (FULL GLAM)
+              {fromGroup("grad", byId, inclusionsOf) ??
+                `FREE TOGA + GRAD BACKDROP · SOFT + HARD COPIES · HMUA ADD-ON ${pesoLabel(2500)} (FULL GLAM)`}
             </p>
           </article>
         </Reveal>
 
         <Reveal delay={140} className="h-full">
           <article className={CARD}>
+            {/* The ID tile is type on ink by design — there is no photo slot here,
+                so an ID cover image has nowhere to go. */}
             <div className="flex aspect-[4/5] flex-col items-center justify-center gap-2 rounded-[3px] bg-ink p-5 text-center">
               <div className="font-mono text-[12px] tracking-[0.3em] text-muted-2">
                 ID PACKAGES
               </div>
               <div className="font-display text-[52px] leading-none text-paper sm:text-[64px]">
-                {pesoLabel(150)}
+                {pesoLabel(cheapest("id"))}
               </div>
               <div className="font-mono text-[10px] leading-[2] tracking-[0.1em] text-faint">
                 2×2 · 1×1 · PASSPORT SIZE
@@ -212,10 +284,10 @@ export function Packages() {
             </div>
             <h3 className={CARD_TITLE}>ID + PRINTS</h3>
             <div className="border-t border-line">
-              {productsIn("id").map((p) => (
+              {rowsFor("id", byId).map((p) => (
                 <PriceRow
                   key={p.id}
-                  label="ID package — any combo"
+                  label={labelFor(p, byId)}
                   price={pesoLabel(p.price)}
                   productId={p.id}
                 />
@@ -230,8 +302,8 @@ export function Packages() {
               />
             </div>
             <p className={FOOTNOTE}>
-              A4 / 8R PHOTO {pesoLabel(99)} · 4R FRAME {pesoLabel(150)} · A4 FRAME{" "}
-              {pesoLabel(450)} · 8R FRAME {pesoLabel(599)}
+              {fromGroup("id", byId, inclusionsOf) ??
+                `A4 / 8R PHOTO ${pesoLabel(99)} · 4R FRAME ${pesoLabel(150)} · A4 FRAME ${pesoLabel(450)} · 8R FRAME ${pesoLabel(599)}`}
             </p>
           </article>
         </Reveal>
@@ -241,12 +313,15 @@ export function Packages() {
         <div className="mt-16 grid items-center gap-8 rounded-lg border border-line p-[22px] lg:grid-cols-[auto_1fr] lg:gap-[44px] lg:p-[26px_32px]">
           <div>
             <div className="mb-1 font-display text-[16px] tracking-[0.02em]">
-              BACKDROP COLORS
+              {copy.backdropHeading}
             </div>
             <div className="font-mono text-[10px] tracking-[0.1em] text-muted">
-              ONE FREE WITH EVERY PACKAGE
-              <br />
-              EXTRA COLOR +{pesoLabel(100)}
+              {copy.backdropNote.map((line, index) => (
+                <span key={`backdrop-note-${index}`}>
+                  {index > 0 ? <br /> : null}
+                  {line}
+                </span>
+              ))}
             </div>
           </div>
           <div className="flex gap-3 lg:gap-4">

@@ -25,10 +25,29 @@ pnpm lint
 | Booking wizard — 5 steps, hold countdown, slot grid, proof upload, hold-expired and done states | Built, driving demo data |
 | Responsive layout (the artboard was desktop-only; mobile is implemented from scratch) | Built |
 | SEO — metadata, OpenGraph, `PhotographyBusiness` + `FAQPage` JSON-LD | Built |
-| Payload CMS at `/admin`, the bookings-API proxies, transactional email, the confirm-poller | **Not built** — see [Integration seams](#integration-seams) |
+| Payload CMS at `/admin` — the studio profile, the page layout, portfolio, testimonials, FAQ, per-package copy | Built, and driving the page |
+| The bookings-API proxies, transactional email, the confirm-poller | **Not built** — see [Integration seams](#integration-seams) |
 
 The wizard is fully interactive but **not yet transactional**: availability, holds
 and payment proof are local state. Nothing is persisted and no money moves.
+
+### What the admin actually drives
+
+Sections are blocks on the `landing-page` global. Dragging one reorders the live
+page, removing one takes it off — along with its entry in the header and footer
+menus, so a link can never point at a section that is gone. The `( 01 )` numerals
+are counted from the rendered order rather than stored, and `{holdMinutes}` and
+`{count}` are substituted at render so copy about the hold window or the number
+of questions cannot go stale.
+
+Every getter falls back to the launch copy in `src/lib/*`. A missing
+`DATABASE_URI`, an unreachable database and an empty collection all degrade to
+the same page, which is why this deploys with or without a database.
+
+Still code-driven, deliberately: package prices, durations and downpayments come
+from `src/lib/products.ts` (the products-API seam) so the page can never disagree
+with the till; the four backdrop swatches; the payment channels and terms, which
+stay in code until the bookings API is live.
 
 ---
 
@@ -145,9 +164,48 @@ Prices already come from `src/lib/products.ts` rather than being hard-coded into
 the markup, so pointing that module at `GET /products` is a one-file change and
 the marketing page cannot disagree with the till.
 
-Also still to build, in rough order: Payload 3 embedded at `/admin` for content
-only, the thin proxy route handlers with zod validation, Resend emails, and the
-confirm-poller cron.
+Also still to build, in rough order: the thin proxy route handlers with zod
+validation, Resend emails, and the confirm-poller cron.
+
+### Database changes
+
+`push` is off in `payload.config.ts`. Payload otherwise syncs the config's schema
+straight to the database on any run where `NODE_ENV !== 'production'` — including
+`pnpm seed` and one-off scripts — and there is only one database here, the live
+one. So a field change means generating a migration and running it:
+
+```bash
+pnpm exec payload migrate:create <name>   # writes src/migrations/
+pnpm exec payload migrate                 # applies it
+```
+
+The deploy build command must run `payload migrate` before `next build`.
+
+> **One-time cleanup needed before the first deploy.** `payload_migrations`
+> carries a `dev` row, left by a dev-mode push that happened before `push` was
+> turned off. While that row is there, `payload migrate` opens an interactive
+> prompt — *"you've dynamically pushed changes to your database … data loss will
+> occur. Would you like to proceed?"* — which a CI build cannot answer, so the
+> deploy stalls or skips the migration.
+>
+> The database schema is already correct: the one pending migration
+> (`faq_note_count_token`) is a `SET DEFAULT` that the push already applied. So
+> the fix is bookkeeping, not DDL — record that migration as run and drop the
+> `dev` marker:
+>
+> ```sql
+> INSERT INTO payload_migrations (name, batch)
+> VALUES ('20260908_090357_faq_note_count_token', 2);
+> DELETE FROM payload_migrations WHERE name = 'dev';
+> ```
+>
+> Run it against the Neon database once, then `payload migrate` is clean and
+> non-interactive from then on.
+
+`pnpm seed` fills an empty admin with the launch content so the studio has
+something to edit rather than a blank form. It skips anything already there —
+collections with documents, and globals that have been written — so running it
+twice never overwrites the studio's own words.
 
 ---
 

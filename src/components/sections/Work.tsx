@@ -5,15 +5,16 @@ import { useMemo, useState } from "react";
 import { Photo } from "@/components/ui/Photo";
 import { Reveal } from "@/components/ui/Reveal";
 import { SectionHeading } from "@/components/ui/SectionHeading";
-import type { WorkEntry } from "@/lib/content";
+import type { Section, WorkEntry } from "@/lib/content";
 import { WORK_CATEGORIES, type WorkCategory } from "@/lib/photos";
 
 interface WorkProps {
   /** Portfolio entries, already resolved by the page. */
   items: WorkEntry[];
+  copy: Extract<Section, { kind: "portfolio" }>;
 }
 
-export function Work({ items }: WorkProps) {
+export function Work({ items, copy }: WorkProps) {
   const [active, setActive] = useState<WorkCategory>("all");
 
   const shown = useMemo(
@@ -27,9 +28,9 @@ export function Work({ items }: WorkProps) {
       className="mx-auto max-w-[1240px] px-5 pt-[10px] pb-16 md:px-10 lg:px-14 lg:pb-[100px]"
     >
       <SectionHeading
-        index="02"
-        title="RECENT WORK"
-        note="REAL SESSIONS, LATEST FIRST"
+        index={copy.numeral}
+        title={copy.heading}
+        note={copy.note}
         className="mb-[30px]"
       />
 

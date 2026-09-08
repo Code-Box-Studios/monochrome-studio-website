@@ -148,11 +148,11 @@ export interface ServicesContent {
    */
   title?: string | null;
   /**
-   * The single photo used for this package on the packages section and in listings.
+   * The photo for this package. The packages section has one photo per family of packages — original, birthday, graduation — so the photo shown is the one from whichever package in that family is ticked "featured" below. The ID packages are printed as type on black and have no photo.
    */
   coverImage?: (number | null) | Media;
   /**
-   * A short paragraph or two about the package — what the session feels like, who it suits. Do not repeat the price here.
+   * NOT SHOWN ON THE SITE YET. There is no per-package page for this to appear on, so anything written here is stored and waiting. A short paragraph or two about the package — what the session feels like, who it suits. Do not repeat the price here.
    */
   description?: {
     root: {
@@ -170,7 +170,7 @@ export interface ServicesContent {
     [k: string]: unknown;
   } | null;
   /**
-   * The bullet list shown under the package, one line per row — e.g. "FREE 10 ENHANCED IMAGES", "OUTFIT CHANGE", "UNLIMITED PROPS". Drag the rows to reorder them.
+   * The small print under this family of packages, one line per row — e.g. "FREE 10 ENHANCED IMAGES", "OUTFIT CHANGE", "UNLIMITED PROPS". They are printed on one line separated by dots, in this order; drag the rows to reorder them. As with the photo, the lines used are the ones from whichever package in the family is ticked "featured".
    */
   inclusions?:
     | {
@@ -179,7 +179,7 @@ export interface ServicesContent {
       }[]
     | null;
   /**
-   * Extra sample photos for this package, shown after the cover image. Drag the rows to change the order they appear in.
+   * NOT SHOWN ON THE SITE YET, for the same reason as the description above. Extra sample photos for this package. For photos that do appear on the home page, use the Portfolio collection.
    */
   gallery?:
     | {
@@ -188,11 +188,11 @@ export interface ServicesContent {
       }[]
     | null;
   /**
-   * Lower numbers appear first. Leave blank to fall back to the booking system order.
+   * Lower numbers appear first in the price list for this family of packages. Leave blank to fall back to the booking system order.
    */
   order?: number | null;
   /**
-   * Tick to highlight this package on the homepage.
+   * Tick to let this package speak for its family on the home page: its photo and its small print are the ones shown above and below that price list. Tick it on one package per family — original, birthday, graduation, ID.
    */
   featured?: boolean | null;
   updatedAt: string;
@@ -816,7 +816,7 @@ export interface SiteSetting {
 export interface LandingPage {
   id: number;
   /**
-   * These are the sections of the home page, in the order visitors see them. Drag a section to move it and the live page reorders to match; remove one and it disappears from the page. Each section holds only its own wording — photos, quotes, questions and prices are edited in their own places and follow the section wherever you put it.
+   * These are the sections of the home page, in the order visitors see them. Drag a section to move it and the live page reorders to match; remove one and it disappears from the page, along with its link in the menu. Each section holds only its own wording — photos, quotes, questions and prices are edited in their own places and follow the section wherever you put it. The ( 01 ) ( 02 ) numerals are counted from this order, so they stay correct however you arrange things, and the scrolling ticker travels with the opening frame. Add each section once: a second copy of one is ignored.
    */
   layout?:
     | (
@@ -859,7 +859,7 @@ export interface HeroBlock {
    */
   primaryCtaLabel?: string | null;
   /**
-   * Label on the outlined button beside it. It jumps down to the packages section.
+   * Label on the outlined button beside it. It jumps down to the packages section, so it is hidden automatically if you take that section off the page — it can never point at something that is not there.
    */
   secondaryCtaLabel?: string | null;
   id?: string | null;
@@ -976,7 +976,7 @@ export interface FaqBlock {
    */
   heading?: string | null;
   /**
-   * Small line printed to the right of the heading on wide screens. The questions and answers live in the FAQ collection.
+   * Small line printed to the right of the heading on wide screens. Write {count} and the number of questions you have published is spelled out in its place, so this line stays true when you add or remove one. The questions and answers themselves live in the FAQ collection.
    */
   note?: string | null;
   id?: string | null;

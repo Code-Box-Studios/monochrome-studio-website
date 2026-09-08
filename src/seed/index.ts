@@ -1,8 +1,10 @@
 import { getPayload } from "payload";
 
 import config from "@payload-config";
+import { DEFAULT_SECTION_ORDER, SECTION_DEFAULTS } from "@/lib/content";
 import { WORK } from "@/lib/photos";
 import { STUDIO } from "@/lib/studio";
+import type { LandingPage } from "@/payload-types";
 
 /**
  * Seeds the CMS with the content the site currently ships hardcoded.
@@ -71,6 +73,29 @@ const FAQS = [
   },
 ];
 
+/**
+ * The home page as designed, one block per section.
+ *
+ * Written from the same constants the page falls back to, so the seeded admin
+ * and an empty admin produce byte-identical pages — the studio can see exactly
+ * what it is editing before it changes anything.
+ */
+const LAYOUT: NonNullable<LandingPage["layout"]> = [
+  { blockType: "hero", ...SECTION_DEFAULTS.hero },
+  { blockType: "packages", ...SECTION_DEFAULTS.packages },
+  { blockType: "portfolio", ...SECTION_DEFAULTS.portfolio },
+  {
+    blockType: "howItWorks",
+    ...SECTION_DEFAULTS.howItWorks,
+    // The defaults are `as const`; the block field wants a mutable array.
+    steps: SECTION_DEFAULTS.howItWorks.steps.map((step) => ({ ...step })),
+  },
+  { blockType: "testimonials", ...SECTION_DEFAULTS.testimonials },
+  { blockType: "faq", ...SECTION_DEFAULTS.faq },
+  { blockType: "ctaBand", ...SECTION_DEFAULTS.ctaBand },
+  { blockType: "visit", ...SECTION_DEFAULTS.visit },
+];
+
 /** Wraps plain text in the minimal Lexical document Payload expects. */
 function richText(text: string) {
   return {
@@ -100,6 +125,16 @@ function richText(text: string) {
 async function seed() {
   if (!process.env.DATABASE_URI) {
     console.error("DATABASE_URI is not set. Seeding needs a database.");
+    process.exit(1);
+  }
+
+  // Catches a block type added to the page but forgotten here, which would seed
+  // an admin that is quietly missing a section.
+  const unseeded = DEFAULT_SECTION_ORDER.filter(
+    (kind) => !LAYOUT.some((block) => block.blockType === kind),
+  );
+  if (unseeded.length > 0) {
+    console.error(`Seed layout is missing section(s): ${unseeded.join(", ")}`);
     process.exit(1);
   }
 
@@ -134,34 +169,53 @@ async function seed() {
   }
 
   /* ---- site settings ---- */
-  await payload.updateGlobal({
-    slug: "site-settings",
-    data: {
-      name: STUDIO.name,
-      tagline: STUDIO.tagline,
-      positioning: STUDIO.positioning,
-      eyebrow: STUDIO.eyebrow,
-      marquee: STUDIO.marquee,
-      address: {
-        lines: [...STUDIO.address.lines],
-        landmark: STUDIO.address.landmark,
-        locality: STUDIO.address.locality,
-        region: STUDIO.address.region,
-        country: STUDIO.address.country,
+  // `name` is required, so its presence means the global has been written once
+  // already. Re-running the seed must not push a studio's real address, phone
+  // and hours back to the launch placeholders.
+  const existingSite = await payload.findGlobal({ slug: "site-settings", depth: 0 });
+  if (existingSite?.name) {
+    console.log(`site-settings: already set up for "${existingSite.name}", skipping`);
+  } else {
+    await payload.updateGlobal({
+      slug: "site-settings",
+      data: {
+        name: STUDIO.name,
+        tagline: STUDIO.tagline,
+        positioning: STUDIO.positioning,
+        eyebrow: STUDIO.eyebrow,
+        marquee: STUDIO.marquee,
+        address: {
+          lines: [...STUDIO.address.lines],
+          landmark: STUDIO.address.landmark,
+          locality: STUDIO.address.locality,
+          region: STUDIO.address.region,
+          country: STUDIO.address.country,
+        },
+        timezone: STUDIO.timezone,
+        hours: STUDIO.hours.map((h) => ({ label: h.label, value: h.value })),
+        contact: {
+          phone: STUDIO.contact.phone,
+          phoneHref: STUDIO.contact.phoneHref,
+          email: STUDIO.contact.email,
+        },
+        socials: STUDIO.socials.map((s) => ({ label: s.label, href: s.href })),
+        // mapEmbedUrl is deliberately left unset — the map stays a placeholder
+        // until the studio consents to embedding a third party.
       },
-      timezone: STUDIO.timezone,
-      hours: STUDIO.hours.map((h) => ({ label: h.label, value: h.value })),
-      contact: {
-        phone: STUDIO.contact.phone,
-        phoneHref: STUDIO.contact.phoneHref,
-        email: STUDIO.contact.email,
-      },
-      socials: STUDIO.socials.map((s) => ({ label: s.label, href: s.href })),
-      // mapEmbedUrl is deliberately left unset — the map stays a placeholder
-      // until the studio consents to embedding a third party.
-    },
-  });
-  console.log("site-settings: updated");
+    });
+    console.log("site-settings: seeded");
+  }
+
+  /* ---- landing page ---- */
+  // Same rule: an edited layout is the studio's, not the seed's to reset.
+  const existingLayout = await payload.findGlobal({ slug: "landing-page", depth: 0 });
+  const sections = existingLayout?.layout ?? [];
+  if (sections.length > 0) {
+    console.log(`landing-page: ${sections.length} sections already present, skipping`);
+  } else {
+    await payload.updateGlobal({ slug: "landing-page", data: { layout: LAYOUT } });
+    console.log(`landing-page: seeded ${LAYOUT.length} sections`);
+  }
 
   /* ---- portfolio ----
      Skipped on purpose: every portfolio row requires an uploaded image, and the

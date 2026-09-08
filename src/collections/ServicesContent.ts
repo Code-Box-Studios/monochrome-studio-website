@@ -1,5 +1,6 @@
 import { lexicalEditor } from '@payloadcms/richtext-lexical'
 import type { CollectionConfig } from 'payload'
+import { revalidateOnChange, revalidateOnDelete } from '@/hooks/revalidateSite'
 
 /**
  * The marketing layer around each bookable package.
@@ -13,6 +14,10 @@ export const ServicesContent: CollectionConfig = {
   slug: 'services-content',
   access: {
     read: () => true,
+  },
+  hooks: {
+    afterChange: [revalidateOnChange],
+    afterDelete: [revalidateOnDelete],
   },
   admin: {
     useAsTitle: 'productId',
@@ -47,7 +52,7 @@ export const ServicesContent: CollectionConfig = {
       relationTo: 'media',
       admin: {
         description:
-          'The single photo used for this package on the packages section and in listings.',
+          'The photo for this package. The packages section has one photo per family of packages — original, birthday, graduation — so the photo shown is the one from whichever package in that family is ticked "featured" below. The ID packages are printed as type on black and have no photo.',
       },
     },
     {
@@ -56,7 +61,7 @@ export const ServicesContent: CollectionConfig = {
       editor: lexicalEditor({}),
       admin: {
         description:
-          'A short paragraph or two about the package — what the session feels like, who it suits. Do not repeat the price here.',
+          'NOT SHOWN ON THE SITE YET. There is no per-package page for this to appear on, so anything written here is stored and waiting. A short paragraph or two about the package — what the session feels like, who it suits. Do not repeat the price here.',
       },
     },
     {
@@ -68,7 +73,7 @@ export const ServicesContent: CollectionConfig = {
       },
       admin: {
         description:
-          'The bullet list shown under the package, one line per row — e.g. "FREE 10 ENHANCED IMAGES", "OUTFIT CHANGE", "UNLIMITED PROPS". Drag the rows to reorder them.',
+          'The small print under this family of packages, one line per row — e.g. "FREE 10 ENHANCED IMAGES", "OUTFIT CHANGE", "UNLIMITED PROPS". They are printed on one line separated by dots, in this order; drag the rows to reorder them. As with the photo, the lines used are the ones from whichever package in the family is ticked "featured".',
       },
       fields: [
         {
@@ -87,7 +92,7 @@ export const ServicesContent: CollectionConfig = {
       },
       admin: {
         description:
-          'Extra sample photos for this package, shown after the cover image. Drag the rows to change the order they appear in.',
+          'NOT SHOWN ON THE SITE YET, for the same reason as the description above. Extra sample photos for this package. For photos that do appear on the home page, use the Portfolio collection.',
       },
       fields: [
         {
@@ -103,7 +108,8 @@ export const ServicesContent: CollectionConfig = {
       type: 'number',
       admin: {
         position: 'sidebar',
-        description: 'Lower numbers appear first. Leave blank to fall back to the booking system order.',
+        description:
+          'Lower numbers appear first in the price list for this family of packages. Leave blank to fall back to the booking system order.',
       },
     },
     {
@@ -111,7 +117,8 @@ export const ServicesContent: CollectionConfig = {
       type: 'checkbox',
       admin: {
         position: 'sidebar',
-        description: 'Tick to highlight this package on the homepage.',
+        description:
+          'Tick to let this package speak for its family on the home page: its photo and its small print are the ones shown above and below that price list. Tick it on one package per family — original, birthday, graduation, ID.',
       },
     },
   ],
