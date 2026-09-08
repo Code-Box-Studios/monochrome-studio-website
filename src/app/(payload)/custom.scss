@@ -1,0 +1,7 @@
+/* Studio overrides for the Payload admin.
+ *
+ * Deliberately empty. The admin is a tool for the studio owner, not a branded
+ * surface, and Payload's own tokens are tuned for both light and dark themes —
+ * overriding one (e.g. --theme-elevation-1000, the brightest text colour) sinks
+ * heading contrast in whichever theme it was not chosen for.
+ */
